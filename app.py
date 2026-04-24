@@ -1140,7 +1140,7 @@ def align_and_crop_strict(org_img_highres, ref_img_highres, return_details=False
     return best_result, message
 
 
-def process_local_group(group_name, output_format="PNG"):
+def process_local_group(group_name, output_format="JPEG"):
     org_dir = TEST_ORG_DIR / group_name
     ref_dir = TEST_REF_DIR / group_name
     out_dir = TEST_OUTPUT_DIR / f"{group_name}_results"
@@ -1307,58 +1307,12 @@ def render_uploaded_processing_ui(output_format):
             )
 
 
-def render_local_batch_ui(output_format):
-    st.subheader("本地测试目录批处理")
-    groups = discover_local_groups()
-    if not groups:
-        st.info("当前没有检测到可配对的本地分组目录。")
-        return
-
-    st.caption(f"检测到本地分组：{', '.join(groups)}")
-    if st.button("处理 test_images 里的本地分组", use_container_width=True):
-        for group in groups:
-            with st.spinner(f"正在处理分组 {group} ..."):
-                summary = process_local_group(group, output_format=output_format)
-
-            st.markdown(f"### 分组 {group}")
-            st.caption(f"配对方式：{summary['pairing_mode']}，输出目录：{summary['output_dir']}")
-            if summary.get("uncut_mode"):
-                st.caption(f"未截头模板配对方式：{summary['uncut_mode']}")
-            for item in summary["results"]:
-                if item["status"] == "OK":
-                    if item.get("uncut_template"):
-                        st.success(f"{item['original']} -> {item['template']}（未截头模板 {item['uncut_template']}）：{item['message']}")
-                    else:
-                        st.success(f"{item['original']} -> {item['template']}：{item['message']}")
-                else:
-                    if item.get("uncut_template"):
-                        st.error(f"{item['original']} -> {item['template']}（未截头模板 {item['uncut_template']}）：{item['message']}")
-                    else:
-                        st.error(f"{item['original']} -> {item['template']}：{item['message']}")
-
-
 def main():
     st.set_page_config(page_title="按着拍图模板自动裁图", page_icon="📏", layout="wide")
     st.title("📏 按着拍图模板自动裁图")
     st.caption("这版支持两条处理路径：默认模板裁切，以及可选的“未截头模板”场景图路径。")
 
-    with st.sidebar:
-        st.markdown("### 测试图片目录")
-        st.code(str(TEST_ORG_DIR), language=None)
-        st.code(str(TEST_REF_DIR), language=None)
-        st.code(str(TEST_OUTPUT_DIR), language=None)
-        st.caption("如果文件名对不上，程序会先尝试同名匹配，再在数量一致时回退到按排序顺序配对。场景图如果提供未截头模板，会自动切换到场景图模式。")
-
-    output_format = st.radio(
-        "输出格式",
-        options=["PNG", "JPEG"],
-        horizontal=True,
-        help="细纹面料优先试 PNG；如果更看重文件体积，可用 JPEG。",
-    )
-
-    render_uploaded_processing_ui(output_format)
-    st.divider()
-    render_local_batch_ui(output_format)
+    render_uploaded_processing_ui("JPEG")
 
 
 if __name__ == "__main__":
